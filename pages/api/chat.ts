@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { Readable } from 'stream';
+import type { ReadableStream as WebReadableStream } from 'stream/web';
 
 export const config = {
   api: {
@@ -69,7 +70,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       Connection: 'keep-alive'
     });
 
-    const stream = Readable.fromWeb(upstreamResponse.body as unknown as ReadableStream);
+    const stream = Readable.fromWeb(upstreamResponse.body as unknown as WebReadableStream<Uint8Array>);
 
     stream.on('data', (chunk) => {
       res.write(chunk);
