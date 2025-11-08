@@ -1,11 +1,13 @@
 import { ChatMessage, ChatMessageData } from '@/components/ChatMessage';
 import {
+  Bars3Icon,
   EllipsisVerticalIcon,
   MoonIcon,
   SunIcon,
   PaperAirplaneIcon,
   MicrophoneIcon,
-  StopIcon as StopSolidIcon
+  StopIcon as StopSolidIcon,
+  XMarkIcon
 } from '@heroicons/react/24/solid';
 import clsx from 'classnames';
 import Link from 'next/link';
@@ -164,6 +166,7 @@ export default function Home({ colorScheme = 'light', toggleColorScheme }: HomeP
   const sendPromptRef = useRef<(text: string) => Promise<void>>(async () => {});
   const inputRef = useRef('');
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     inputRef.current = input;
@@ -198,6 +201,7 @@ export default function Home({ colorScheme = 'light', toggleColorScheme }: HomeP
   const handleNewConversation = () => {
     stopSpeaking();
     setMenuOpenId(null);
+    setMobileMenuOpen(false);
     const initialMessages = [createMessage('assistant', INITIAL_GREETING)];
     const newConversation: Conversation = {
       id: generateId(),
@@ -221,6 +225,7 @@ export default function Home({ colorScheme = 'light', toggleColorScheme }: HomeP
     if (!conversation) return;
     stopSpeaking();
     setMenuOpenId(null);
+    setMobileMenuOpen(false);
     setActiveConversationId(conversationId);
     setMessages(conversation.messages);
     setMemory(conversation.memory ?? '');
@@ -231,6 +236,7 @@ export default function Home({ colorScheme = 'light', toggleColorScheme }: HomeP
 
   const handleRemoveConversation = (conversationId: string) => {
     setMenuOpenId(null);
+    setMobileMenuOpen(false);
     const remaining = conversations.filter((conversation) => conversation.id !== conversationId);
     setConversations(remaining);
 
@@ -641,6 +647,7 @@ export default function Home({ colorScheme = 'light', toggleColorScheme }: HomeP
   const clearChat = () => {
     const resetMessages = [createMessage('assistant', INITIAL_GREETING)];
     stopSpeaking();
+    setMobileMenuOpen(false);
     const updatedConversations = conversations.map((conversation) =>
       conversation.id === activeConversationId
         ? { ...conversation, title: 'New Chat', messages: resetMessages, memory: '', updatedAt: Date.now() }
@@ -799,79 +806,26 @@ export default function Home({ colorScheme = 'light', toggleColorScheme }: HomeP
         </aside>
 
         <div className="flex min-h-[calc(100vh-4rem)] w-full flex-1 flex-col" onClick={() => setMenuOpenId(null)}>
-          <header className="sticky top-0 z-20 mb-6 flex flex-wrap items-center justify-between gap-3 rounded-3xl border border-white/50 bg-white/70 p-4 shadow-lg backdrop-blur-xl ring-1 ring-emerald-500/10 dark:border-slate-700/60 dark:bg-slate-900/70 dark:ring-emerald-400/10">
-            <div>
-              <h1 className="text-xl font-semibold sm:text-2xl">Eco AI</h1>
-              <p className="text-sm text-slate-600/80 dark:text-slate-300/80">
-                Your intelligent, calm, and creative AI assistant built by Chandon Kumar.
-              </p>
-              {activeConversation?.title && activeConversation.title !== 'New Chat' ? (
-                <p className="text-xs text-slate-500 dark:text-slate-400">Current chat: {activeConversation.title}</p>
-              ) : null}
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <Link
-                href="/profile"
-                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200/70 bg-white/80 text-slate-600 shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-300 hover:text-emerald-500 dark:border-slate-600/70 dark:bg-slate-800/70 dark:text-slate-200 sm:hidden"
-                aria-label="Open profile"
-              >
-                <span className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-emerald-500 text-sm font-semibold text-white shadow-sm">
-                  {avatarUrl ? (
-                    <img
-                      src={avatarUrl}
-                      alt={displayName}
-                      className="h-full w-full object-cover"
-                      referrerPolicy="no-referrer"
-                    />
-                  ) : (
-                    userInitials
-                  )}
-                </span>
-              </Link>
-              <Link
-                href="/profile"
-                className="hidden items-center gap-3 rounded-full border border-slate-200/70 bg-white/80 px-3 py-1 shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-300 hover:shadow-md dark:border-slate-600/70 dark:bg-slate-800/70 dark:text-slate-200 sm:flex"
-              >
-                <span className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-emerald-500 text-sm font-semibold text-white shadow-sm">
-                  {avatarUrl ? (
-                    <img
-                      src={avatarUrl}
-                      alt={displayName}
-                      className="h-full w-full object-cover"
-                      referrerPolicy="no-referrer"
-                    />
-                  ) : (
-                    userInitials
-                  )}
-                </span>
-                <span className="flex flex-col leading-tight">
-                  <span className="text-sm font-medium text-slate-600 dark:text-slate-100">{displayName}</span>
-                  <span className="text-xs text-emerald-600 dark:text-emerald-300">View profile</span>
-                </span>
-              </Link>
+          <header className="sticky top-0 z-20 mb-6 rounded-3xl border border-white/50 bg-white/70 p-4 shadow-lg backdrop-blur-xl ring-1 ring-emerald-500/10 dark:border-slate-700/60 dark:bg-slate-900/70 dark:ring-emerald-400/10">
+            <div className="flex w-full items-center justify-between sm:hidden">
               <button
                 type="button"
-                onClick={handleNewConversation}
-                className="inline-flex items-center rounded-full border border-emerald-400 bg-emerald-500 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-emerald-400 lg:hidden"
+                onClick={() => setMobileMenuOpen(true)}
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-300/60 bg-white/80 text-slate-600 transition hover:-translate-y-0.5 hover:text-emerald-500 dark:border-slate-600/70 dark:bg-slate-800/70 dark:text-slate-100"
+                aria-label="Open navigation menu"
               >
-                New chat
+                <Bars3Icon className="h-5 w-5" />
               </button>
-              <button
-                type="button"
-                onClick={clearChat}
-                className="rounded-full border border-slate-300/60 bg-white/80 px-4 py-2 text-sm font-medium text-slate-600 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md dark:border-slate-600/70 dark:bg-slate-800/70 dark:text-slate-100"
-              >
-                Clear chat
-              </button>
-              <button
-                type="button"
-                onClick={async () => {
-                  await signOut();
-                }}
-                className="rounded-full border border-slate-300/60 bg-white/80 px-4 py-2 text-sm font-medium text-slate-600 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md dark:border-slate-600/70 dark:bg-slate-800/70 dark:text-slate-100"
-              >
-                Sign out
-              </button>
+              <div className="flex flex-col items-center">
+                <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">Eco AI</span>
+                {activeConversation?.title && activeConversation.title !== 'New Chat' ? (
+                  <span className="text-xs text-slate-500 dark:text-slate-400">
+                    {activeConversation.title}
+                  </span>
+                ) : (
+                  <span className="text-xs text-slate-500 dark:text-slate-400">Fresh conversation</span>
+                )}
+              </div>
               <button
                 type="button"
                 onClick={toggleColorScheme}
@@ -881,7 +835,202 @@ export default function Home({ colorScheme = 'light', toggleColorScheme }: HomeP
                 {colorScheme === 'dark' ? <SunIcon className="h-5 w-5" /> : <MoonIcon className="h-5 w-5" />}
               </button>
             </div>
+
+            <div className="hidden w-full items-center justify-between gap-3 sm:flex">
+              <div>
+                <h1 className="text-xl font-semibold sm:text-2xl">Eco AI</h1>
+                <p className="text-sm text-slate-600/80 dark:text-slate-300/80">
+                  Your intelligent, calm, and creative AI assistant built by Chandon Kumar.
+                </p>
+                {activeConversation?.title && activeConversation.title !== 'New Chat' ? (
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Current chat: {activeConversation.title}</p>
+                ) : null}
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <Link
+                  href="/profile"
+                  className="hidden items-center gap-3 rounded-full border border-slate-200/70 bg-white/80 px-3 py-1 shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-300 hover:shadow-md dark:border-slate-600/70 dark:bg-slate-800/70 dark:text-slate-200 sm:flex"
+                >
+                  <span className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-emerald-500 text-sm font-semibold text-white shadow-sm">
+                    {avatarUrl ? (
+                      <img
+                        src={avatarUrl}
+                        alt={displayName}
+                        className="h-full w-full object-cover"
+                        referrerPolicy="no-referrer"
+                      />
+                    ) : (
+                      userInitials
+                    )}
+                  </span>
+                  <span className="flex flex-col leading-tight">
+                    <span className="text-sm font-medium text-slate-600 dark:text-slate-100">{displayName}</span>
+                    <span className="text-xs text-emerald-600 dark:text-emerald-300">View profile</span>
+                  </span>
+                </Link>
+                <button
+                  type="button"
+                  onClick={handleNewConversation}
+                  className="inline-flex items-center rounded-full border border-emerald-400 bg-emerald-500 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-emerald-400 lg:hidden"
+                >
+                  New chat
+                </button>
+                <button
+                  type="button"
+                  onClick={clearChat}
+                  className="rounded-full border border-slate-300/60 bg-white/80 px-4 py-2 text-sm font-medium text-slate-600 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md dark:border-slate-600/70 dark:bg-slate-800/70 dark:text-slate-100"
+                >
+                  Clear chat
+                </button>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    await signOut();
+                  }}
+                  className="rounded-full border border-slate-300/60 bg-white/80 px-4 py-2 text-sm font-medium text-slate-600 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md dark:border-slate-600/70 dark:bg-slate-800/70 dark:text-slate-100"
+                >
+                  Sign out
+                </button>
+                <button
+                  type="button"
+                  onClick={toggleColorScheme}
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-300/60 bg-white/80 text-slate-600 transition hover:-translate-y-0.5 hover:text-emerald-500 dark:border-slate-600/70 dark:bg-slate-800/70 dark:text-slate-100"
+                  aria-label="Toggle color scheme"
+                >
+                  {colorScheme === 'dark' ? <SunIcon className="h-5 w-5" /> : <MoonIcon className="h-5 w-5" />}
+                </button>
+              </div>
+            </div>
           </header>
+
+          {mobileMenuOpen ? (
+            <div className="fixed inset-0 z-40 sm:hidden">
+              <button
+                type="button"
+                className="absolute inset-0 bg-slate-950/50"
+                aria-label="Close navigation menu"
+                onClick={() => setMobileMenuOpen(false)}
+              />
+              <div className="absolute inset-x-4 top-16 bottom-4 overflow-y-auto rounded-3xl border border-white/70 bg-white/95 p-5 backdrop-blur-2xl transition dark:border-slate-700/70 dark:bg-slate-900/95">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-500 text-white">
+                      {avatarUrl ? (
+                        <img
+                          src={avatarUrl}
+                          alt={displayName}
+                          className="h-full w-full rounded-xl object-cover"
+                          referrerPolicy="no-referrer"
+                        />
+                      ) : (
+                        userInitials
+                      )}
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">{displayName}</span>
+                      <span className="text-xs text-slate-500 dark:text-slate-400">Navigate Eco AI</span>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200/80 bg-white/80 text-slate-600 transition hover:text-emerald-500 dark:border-slate-600/70 dark:bg-slate-800/70 dark:text-slate-100"
+                    aria-label="Close navigation menu"
+                  >
+                    <XMarkIcon className="h-5 w-5" />
+                  </button>
+                </div>
+
+                <div className="mt-5 space-y-5">
+                  <Link
+                    href="/profile"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center gap-3 rounded-2xl border border-slate-200/80 bg-white px-4 py-3 text-left transition hover:-translate-y-0.5 hover:shadow-md dark:border-slate-600/70 dark:bg-slate-800/70"
+                  >
+                    <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/90 text-base font-semibold text-white shadow-md">
+                      {userInitials}
+                    </span>
+                    <div className="flex flex-col leading-tight">
+                      <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{displayName}</span>
+                      <span className="text-xs text-emerald-600 dark:text-emerald-300">View profile</span>
+                    </div>
+                  </Link>
+
+                  <div className="rounded-2xl border border-slate-200/80 bg-white px-4 py-3 dark:border-slate-600/70 dark:bg-slate-800/70">
+                    <p className="text-xs uppercase tracking-wide text-emerald-600 dark:text-emerald-300">Quick actions</p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={handleNewConversation}
+                        className="inline-flex flex-1 items-center justify-center rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-emerald-400"
+                      >
+                        New chat
+                      </button>
+                      <button
+                        type="button"
+                        onClick={clearChat}
+                        className="inline-flex flex-1 items-center justify-center rounded-xl border border-slate-300/80 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition hover:-translate-y-0.5 hover:border-slate-300 dark:border-slate-600/70 dark:bg-slate-800/70 dark:text-slate-100"
+                      >
+                        Clear chat
+                      </button>
+                    </div>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          toggleColorScheme?.();
+                          setMobileMenuOpen(false);
+                        }}
+                        className="inline-flex flex-1 items-center justify-center rounded-xl border border-slate-300/80 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition hover:-translate-y-0.5 hover:border-slate-300 dark:border-slate-600/70 dark:bg-slate-800/70 dark:text-slate-100"
+                      >
+                        {colorScheme === 'dark' ? 'Light mode' : 'Dark mode'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          setMobileMenuOpen(false);
+                          await signOut();
+                        }}
+                        className="inline-flex flex-1 items-center justify-center rounded-xl border border-transparent bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:shadow-md dark:bg-slate-100 dark:text-slate-900"
+                      >
+                        Sign out
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl border border-slate-200/80 bg-white px-4 py-3 dark:border-slate-600/70 dark:bg-slate-800/70">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                      Recent chats
+                    </p>
+                    <div className="mt-3 flex flex-col gap-2">
+                      {recentChats.length === 0 ? (
+                        <p className="text-sm text-slate-500 dark:text-slate-400">No conversations yet.</p>
+                      ) : (
+                        recentChats.map((conversation) => (
+                          <button
+                            key={conversation.id}
+                            type="button"
+                            onClick={() => handleSelectConversation(conversation.id)}
+                            className={clsx(
+                              'flex flex-col rounded-xl border px-3 py-2 text-left transition',
+                              conversation.id === activeConversationId
+                                ? 'border-emerald-400 bg-emerald-50 text-emerald-700 dark:border-emerald-400/60 dark:bg-emerald-500/10 dark:text-emerald-200'
+                                : 'border-slate-200 bg-white text-slate-700 hover:border-emerald-200 hover:bg-emerald-50/60 dark:border-slate-600/70 dark:bg-slate-800/70 dark:text-slate-200 dark:hover:border-emerald-400/40 dark:hover:bg-emerald-500/10'
+                            )}
+                          >
+                            <span className="text-sm font-medium">{conversation.title || 'New Chat'}</span>
+                            <span className="text-xs text-slate-500 dark:text-slate-400">
+                              {new Date(conversation.updatedAt).toLocaleString()}
+                            </span>
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : null}
 
           <section className="flex min-h-0 flex-1 flex-col rounded-3xl border border-white/50 bg-white/80 shadow-2xl backdrop-blur-xl transition dark:border-slate-700/60 dark:bg-slate-900/70">
             <main className="flex-1 overflow-hidden">
