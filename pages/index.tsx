@@ -165,6 +165,7 @@ export default function Home({ colorScheme = 'light', toggleColorScheme }: HomeP
   const cancelledRecordingRef = useRef(false);
   const sendPromptRef = useRef<(text: string) => Promise<void>>(async () => {});
   const inputRef = useRef('');
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -620,6 +621,32 @@ export default function Home({ colorScheme = 'light', toggleColorScheme }: HomeP
     await submitMessage();
   };
 
+  const adjustTextareaHeight = useCallback(() => {
+    if (textareaRef.current) {
+      const textarea = textareaRef.current;
+      textarea.style.height = 'auto';
+      const scrollHeight = textarea.scrollHeight;
+      // Use smaller max height on mobile screens (640px breakpoint)
+      const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
+      const maxHeight = isMobile ? 150 : 200; // 150px on mobile, 200px on larger screens
+      textarea.style.height = `${Math.min(scrollHeight, maxHeight)}px`;
+      textarea.style.overflowY = scrollHeight > maxHeight ? 'auto' : 'hidden';
+    }
+  }, []);
+
+  const resetTextareaHeight = useCallback(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.overflowY = 'hidden';
+    }
+  }, []);
+
+  useEffect(() => {
+    if (input === '') {
+      resetTextareaHeight();
+    }
+  }, [input, resetTextareaHeight]);
+
   const handleKeyDown = async (event: KeyboardEvent<HTMLTextAreaElement>) => {
     if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) {
       event.preventDefault();
@@ -1052,24 +1079,57 @@ export default function Home({ colorScheme = 'light', toggleColorScheme }: HomeP
               </div>
             </main>
 
-            <footer className="sticky bottom-0 border-t border-slate-200/60 bg-white/85 px-4 py-5 shadow-inner backdrop-blur-xl dark:border-slate-700/60 dark:bg-slate-900/80">
-              <form onSubmit={handleSubmit} className="mx-auto flex w-full max-w-4xl flex-col gap-3">
-                <div className="relative flex items-end gap-3">
+            <footer className="sticky bottom-0 border-t border-slate-200/60 bg-white/85 px-3 py-3 sm:px-4 sm:py-5 shadow-inner backdrop-blur-xl dark:border-slate-700/60 dark:bg-slate-900/80">
+              <form onSubmit={handleSubmit} className="mx-auto flex w-full max-w-4xl flex-col gap-2 sm:gap-3">
+                <div className="relative flex items-end gap-2 sm:gap-3">
+                  {/* Mic button - left side on mobile, hidden on larger screens */}
+                  {speechInputSupported ? (
+                    <button
+                      type="button"
+                      onClick={handleToggleRecording}
+                      className={clsx(
+                        'sm:hidden inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border text-slate-600 transition focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-white dark:text-slate-200 dark:focus:ring-offset-slate-900',
+                        isRecording
+                          ? 'border-transparent bg-rose-500 text-white shadow-lg focus:ring-rose-300'
+                          : 'border-slate-200/70 bg-white/80 hover:border-emerald-400 hover:text-emerald-600 dark:border-slate-600/70 dark:bg-slate-800/70 dark:hover:border-emerald-400 dark:hover:text-emerald-300'
+                      )}
+                      aria-label={isRecording ? 'Stop voice input' : 'Start voice input'}
+                      aria-pressed={isRecording}
+                    >
+                      {isRecording ? <StopSolidIcon className="h-3.5 w-3.5" /> : <MicrophoneIcon className="h-3.5 w-3.5" />}
+                    </button>
+                  ) : null}
+                  
                   <textarea
+                    ref={textareaRef}
                     value={input}
-                    onChange={(event) => setInput(event.target.value)}
+                    onChange={(event) => {
+                      setInput(event.target.value);
+                      // Use setTimeout to ensure DOM is updated before adjusting height
+                      setTimeout(() => adjustTextareaHeight(), 0);
+                    }}
                     onKeyDown={handleKeyDown}
                     placeholder="Type your message…"
                     rows={1}
-                    onInput={(event) => {
-                      const target = event.currentTarget;
-                      target.style.height = 'auto';
-                      target.style.height = `${Math.min(target.scrollHeight, 200)}px`;
-                    }}
-                    className="no-scrollbar w-full resize-none rounded-2xl border border-slate-200/80 bg-white/90 px-4 py-3 pr-28 text-base text-slate-900 shadow-sm transition focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200 dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-100 dark:focus:border-emerald-400 dark:focus:ring-emerald-900/40"
+                    className={clsx(
+                      'no-scrollbar flex-1 min-w-0 resize-none rounded-xl sm:rounded-2xl border border-slate-200/80 bg-white/90 px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base text-slate-900 shadow-sm transition focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200 dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-100 dark:focus:border-emerald-400 dark:focus:ring-emerald-900/40 max-h-[150px] sm:max-h-[200px]'
+                    )}
+                    style={{ minHeight: '44px' }}
                     disabled={isStreaming}
                   />
-                  <div className="flex items-center gap-2">
+                  
+                  {/* Send button - right side on mobile */}
+                  <button
+                    type="submit"
+                    className="sm:hidden inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-white shadow-lg transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:bg-emerald-300"
+                    disabled={isStreaming || !input.trim()}
+                    aria-label="Send message"
+                  >
+                    <PaperAirplaneIcon className="h-3.5 w-3.5" />
+                  </button>
+                  
+                  {/* Button group - right side on larger screens */}
+                  <div className="hidden sm:flex shrink-0 items-center gap-2">
                     {speechInputSupported ? (
                       <button
                         type="button"
